@@ -21,7 +21,7 @@
       }
     })();
   </script>
-  <link rel="stylesheet" href="styles.css?v=3" />
+  <link rel="stylesheet" href="styles.css?v=4" />
   <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js" defer></script>
 </head>
 <body>
@@ -107,13 +107,13 @@
       <div class="diagram" id="diagram-inline">
         <pre class="mermaid" id="arch-mermaid">
 flowchart LR
-  UI["Web UI / curl"] --> Core["Core Hono\nupload · claim · serve · expire"]
+  UI["Web UI / curl"] --> Core["Core Hono<br/>upload / claim / serve / expire"]
   Core --> Blob["BlobStore interface"]
   Core --> Meta["MetaStore interface"]
   Blob --> FS["Local FS blobs"]
-  Meta --> Mem["In-memory meta\n(SQLite-ready later)"]
-  Blob -. future .-> R2["R2 / S3"]
-  Meta -. future .-> KV["KV / DynamoDB TTL"]
+  Meta --> Mem["In-memory meta<br/>SQLite-ready later"]
+  Blob -.->|future| R2["R2 / S3"]
+  Meta -.->|future| KV["KV / DynamoDB TTL"]
         </pre>
         <noscript>
           <p class="diagram-fallback" style="display:block" data-i18n="arch.noscript">
@@ -431,6 +431,17 @@ npm run dev       <span class="c"># http://localhost:8787</span>
         };
       }
 
+      var MERMAID_SRC = [
+        'flowchart LR',
+        '  UI["Web UI / curl"] --> Core["Core Hono<br/>upload / claim / serve / expire"]',
+        '  Core --> Blob["BlobStore interface"]',
+        '  Core --> Meta["MetaStore interface"]',
+        '  Blob --> FS["Local FS blobs"]',
+        '  Meta --> Mem["In-memory meta<br/>SQLite-ready later"]',
+        '  Blob -.->|future| R2["R2 / S3"]',
+        '  Meta -.->|future| KV["KV / DynamoDB TTL"]'
+      ].join('\n');
+
       var mermaidReady = false;
       function renderMermaid(force) {
         if (typeof mermaid === 'undefined') { showSvgFallback(); return; }
@@ -447,11 +458,9 @@ npm run dev       <span class="c"># http://localhost:8787</span>
             });
             mermaidReady = true;
           }
-          var src = host.getAttribute('data-src');
-          if (!src) {
-            src = host.textContent.trim();
-            host.setAttribute('data-src', src);
-          }
+          var src = host.getAttribute('data-src') || MERMAID_SRC;
+          if (!host.getAttribute('data-src')) host.setAttribute('data-src', MERMAID_SRC);
+          src = MERMAID_SRC;
           host.removeAttribute('data-processed');
           host.style.display = 'flex';
           host.innerHTML = src;
@@ -485,16 +494,45 @@ npm run dev       <span class="c"># http://localhost:8787</span>
       var modalBody = document.getElementById('diagram-modal-body');
       var lastFocus = null;
 
+      function isMermaidErrorSvg(svg) {
+        if (!svg) return true;
+        var t = (svg.textContent || '') + (svg.getAttribute('aria-roledescription') || '');
+        if (/syntax error/i.test(t)) return true;
+        if (svg.querySelector && svg.querySelector('g#syntax-error, [id*="syntax-error"], .error-icon')) return true;
+        return false;
+      }
+
       function openModal() {
         if (!modal || !modalBody) return;
         lastFocus = document.activeElement;
         var inline = document.getElementById('diagram-inline');
-        var rendered = inline.querySelector('.mermaid svg');
+        var host = inline && inline.querySelector('.mermaid');
+        var rendered = host && host.querySelector('svg');
         var fallbackSvg = document.getElementById('arch-svg');
         modalBody.innerHTML = '';
-        if (rendered) modalBody.appendChild(rendered.cloneNode(true));
-        else if (fallbackSvg && fallbackSvg.style.display !== 'none') modalBody.appendChild(fallbackSvg.cloneNode(true));
-        else modalBody.appendChild(inline.cloneNode(true));
+
+        if (rendered && !isMermaidErrorSvg(rendered)) {
+          modalBody.appendChild(rendered.cloneNode(true));
+        } else if (fallbackSvg) {
+          var clone = fallbackSvg.cloneNode(true);
+          clone.id = 'arch-svg-modal';
+          clone.style.display = 'block';
+          clone.classList.remove('diagram-fallback');
+          modalBody.appendChild(clone);
+        } else if (host && typeof mermaid !== 'undefined') {
+          var box = document.createElement('div');
+          box.className = 'mermaid';
+          box.textContent = host.getAttribute('data-src') || MERMAID_SRC;
+          modalBody.appendChild(box);
+          try {
+            mermaid.run({ nodes: [box] }).catch(function () {
+              modalBody.innerHTML = '<p class="diagram-fallback" style="display:block">Không render được biểu đồ.</p>';
+            });
+          } catch (e) {
+            modalBody.innerHTML = '<p class="diagram-fallback" style="display:block">Không render được biểu đồ.</p>';
+          }
+        }
+
         if (typeof modal.showModal === 'function') modal.showModal();
         else { modal.hidden = false; modal.setAttribute('open', ''); }
         var closeBtn = document.getElementById('diagram-close');
