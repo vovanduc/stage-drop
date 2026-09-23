@@ -1,10 +1,26 @@
 <!doctype html>
-<html lang="en">
+<html lang="vi">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="stage-drop — portable instant static-site staging. Drag-and-drop a zip, get a temporary live URL, claim before it expires." />
-  <title>stage-drop — instant static staging</title>
+  <meta name="description" content="stage-drop — staging site tĩnh tức thì. Kéo-thả zip, nhận URL tạm, claim trước khi hết hạn." />
+  <title>stage-drop — staging tĩnh tức thì</title>
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('stage-drop-theme');
+        document.documentElement.setAttribute('data-theme', (t === 'dark' || t === 'light') ? t : 'light');
+      } catch (e) {
+        document.documentElement.setAttribute('data-theme', 'light');
+      }
+      try {
+        var l = localStorage.getItem('stage-drop-lang');
+        document.documentElement.setAttribute('lang', (l === 'en' || l === 'vi') ? l : 'vi');
+      } catch (e) {
+        document.documentElement.setAttribute('lang', 'vi');
+      }
+    })();
+  </script>
   <link rel="stylesheet" href="styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js" defer></script>
 </head>
@@ -12,24 +28,34 @@
   <div class="wrap">
     <nav class="nav" aria-label="Primary">
       <a class="nav-brand" href="./">stage<span>-</span>drop</a>
-      <div class="nav-links">
-        <a href="#how">How it works</a>
-        <a href="#architecture">Architecture</a>
-        <a href="#quickstart">Quickstart</a>
-        <a href="#gallery">Screenshots</a>
-        <a href="https://github.com/vovanduc/stage-drop">GitHub</a>
+      <div class="nav-right">
+        <div class="nav-links">
+          <a href="#how" data-i18n="nav.how">Cách hoạt động</a>
+          <a href="#architecture" data-i18n="nav.arch">Kiến trúc</a>
+          <a href="#quickstart" data-i18n="nav.qs">Bắt đầu nhanh</a>
+          <a href="#gallery" data-i18n="nav.gallery">Ảnh chụp</a>
+          <a href="https://github.com/vovanduc/stage-drop">GitHub</a>
+        </div>
+        <div class="lang-toggle" role="group" aria-label="Language">
+          <button type="button" id="lang-vi" aria-pressed="true">VI</button>
+          <button type="button" id="lang-en" aria-pressed="false">EN</button>
+        </div>
+        <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Chuyển sang giao diện tối" title="Sáng / tối">
+          <span class="icon-moon" aria-hidden="true">🌙</span>
+          <span class="icon-sun" aria-hidden="true">☀️</span>
+          <span class="theme-label" data-i18n="theme.toDark">Tối</span>
+        </button>
       </div>
     </nav>
 
     <header class="hero">
       <h1>stage-drop</h1>
-      <p class="pitch">
-        Portable <strong>instant static-site staging</strong>: drag-and-drop a zip →
-        get a temporary live URL → claim it before it expires.
+      <p class="pitch" data-i18n="hero.pitch">
+        <strong>Staging site tĩnh tức thì</strong>, mang đi được: kéo-thả zip → nhận URL tạm → claim trước khi hết hạn.
       </p>
       <div class="badges" aria-label="Project badges">
         <span class="badge accent">
-          Inspired by
+          <span data-i18n="badge.inspired">Lấy cảm hứng từ</span>
           <a href="https://www.cloudflare.com/drop/" target="_blank" rel="noopener">Cloudflare Drop</a>
         </span>
         <span class="badge ok">MIT</span>
@@ -37,42 +63,47 @@
       </div>
 
       <div class="callout" role="note">
-        <strong>This page is static docs.</strong>
-        The live upload/claim API runs locally (or later on Workers) — not on GitHub Pages.
-        Clone the repo and run <code>npm run dev</code> to try the real server.
+        <strong data-i18n="callout.title">Trang này chỉ là docs tĩnh.</strong>
+        <span data-i18n="callout.body"> API upload/claim chạy local (hoặc sau này trên Workers) — không chạy trên GitHub Pages. Clone repo và chạy <code>npm run dev</code> để thử server thật.</span>
       </div>
     </header>
 
     <section id="how">
-      <h2>How it works</h2>
+      <h2 data-i18n="how.title">Cách hoạt động</h2>
       <div class="flow">
         <article class="step">
-          <h3>Upload</h3>
-          <p>Drop a zip (≤10&nbsp;MB, ≤500 files) with <code>index.html</code>. Get live + claim URLs back.</p>
+          <h3 data-i18n="how.upload.title">Upload</h3>
+          <p data-i18n="how.upload.body">Thả zip (≤10&nbsp;MB, ≤500 file) có <code>index.html</code>. Nhận live + claim URL.</p>
         </article>
         <article class="step">
-          <h3>Live URL</h3>
-          <p>Site is served under <code>/s/:siteId/</code> for <strong>60 minutes</strong> unless claimed.</p>
+          <h3 data-i18n="how.live.title">Live URL</h3>
+          <p data-i18n="how.live.body">Site phục vụ dưới <code>/s/:siteId/</code> trong <strong>60 phút</strong> nếu chưa claim.</p>
         </article>
         <article class="step">
-          <h3>Claim</h3>
-          <p>One-shot token (≥128-bit). Only a hash is stored; claim clears expiry.</p>
+          <h3 data-i18n="how.claim.title">Claim</h3>
+          <p data-i18n="how.claim.body">Token một lần (≥128-bit). Chỉ lưu hash; claim xóa hạn.</p>
         </article>
         <article class="step">
-          <h3>Sweep</h3>
-          <p>Periodic cleanup removes expired unclaimed sites from blob + meta stores.</p>
+          <h3 data-i18n="how.sweep.title">Sweep</h3>
+          <p data-i18n="how.sweep.body">Dọn định kỳ các site hết hạn chưa claim khỏi blob + meta store.</p>
         </article>
       </div>
     </section>
 
     <section id="architecture">
-      <h2>Architecture</h2>
-      <p>
-        Core Hono app behind portable <code>BlobStore</code> and <code>MetaStore</code> interfaces.
-        Local FS + in-memory today; R2/KV and S3/DynamoDB are future adapters.
+      <div class="section-head">
+        <h2 data-i18n="arch.title">Kiến trúc</h2>
+        <button type="button" class="icon-btn" id="diagram-expand" aria-haspopup="dialog" aria-controls="diagram-modal" data-i18n="arch.expand">
+          Phóng to
+        </button>
+      </div>
+      <p data-i18n="arch.body">
+        App Hono lõi đứng sau interface <code>BlobStore</code> và <code>MetaStore</code> mang đi được.
+        Hiện tại: FS local + in-memory; R2/KV và S3/DynamoDB là adapter sau.
+        Biểu đồ: <strong>Mermaid</strong> (+ SVG dự phòng).
       </p>
-      <div class="diagram">
-        <pre class="mermaid">
+      <div class="diagram" id="diagram-inline">
+        <pre class="mermaid" id="arch-mermaid">
 flowchart LR
   UI["Web UI / curl"] --> Core["Core Hono\nupload · claim · serve · expire"]
   Core --> Blob["BlobStore interface"]
@@ -83,23 +114,21 @@ flowchart LR
   Meta -. future .-> KV["KV / DynamoDB TTL"]
         </pre>
         <noscript>
-          <p class="diagram-fallback" style="display:block">
-            Enable JavaScript for the Mermaid diagram, or see the same chart in the
-            <a href="https://github.com/vovanduc/stage-drop#architecture">README</a>.
+          <p class="diagram-fallback" style="display:block" data-i18n="arch.noscript">
+            Bật JavaScript để xem Mermaid, hoặc xem chart trong README.
           </p>
         </noscript>
-        <!-- Inline SVG fallback if Mermaid CDN fails -->
-        <svg id="arch-svg" class="diagram-fallback" viewBox="0 0 720 220" width="100%" height="220" role="img" aria-label="Architecture: UI to Core Hono to BlobStore and MetaStore">
+        <svg id="arch-svg" class="diagram-fallback" viewBox="0 0 720 220" width="100%" height="220" role="img" aria-label="Architecture diagram">
           <defs>
             <style>
-              .n { fill:#141b2d; stroke:#243049; stroke-width:1.5; }
-              .t { fill:#e8eefc; font:600 13px ui-sans-serif,system-ui,sans-serif; }
-              .s { fill:#9aa8c7; font:11px ui-sans-serif,system-ui,sans-serif; }
-              .e { stroke:#5b8cff; stroke-width:1.5; fill:none; marker-end:url(#arr); }
-              .d { stroke:#5b8cff; stroke-width:1.2; stroke-dasharray:5 4; fill:none; marker-end:url(#arr); }
+              .n { fill: var(--card); stroke: var(--border); stroke-width: 1.5; }
+              .t { fill: var(--text); font: 600 13px ui-sans-serif, system-ui, sans-serif; }
+              .s { fill: var(--muted); font: 11px ui-sans-serif, system-ui, sans-serif; }
+              .e { stroke: var(--accent); stroke-width: 1.5; fill: none; marker-end: url(#arr); }
+              .d { stroke: var(--accent); stroke-width: 1.2; stroke-dasharray: 5 4; fill: none; marker-end: url(#arr); }
             </style>
             <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
-              <path d="M0,0 L6,3 L0,6 Z" fill="#5b8cff"/>
+              <path d="M0,0 L6,3 L0,6 Z" fill="currentColor" style="fill: var(--accent)"/>
             </marker>
           </defs>
           <rect class="n" x="16" y="80" width="110" height="56" rx="10"/>
@@ -132,9 +161,20 @@ flowchart LR
       </div>
     </section>
 
+    <dialog class="diagram-modal" id="diagram-modal" aria-labelledby="diagram-modal-title">
+      <div class="diagram-modal__backdrop" data-close></div>
+      <div class="diagram-modal__panel" role="document">
+        <div class="diagram-modal__head">
+          <h3 id="diagram-modal-title" data-i18n="arch.title">Kiến trúc</h3>
+          <button type="button" class="icon-btn" id="diagram-close" data-close data-i18n="arch.close">Đóng</button>
+        </div>
+        <div class="diagram-modal__body" id="diagram-modal-body"></div>
+      </div>
+    </dialog>
+
     <section id="quickstart">
-      <h2>Quickstart</h2>
-      <p>Run the real server locally — GitHub Pages only hosts this static companion site.</p>
+      <h2 data-i18n="qs.title">Bắt đầu nhanh</h2>
+      <p data-i18n="qs.body">Chạy server thật trên máy — GitHub Pages chỉ host trang docs tĩnh này.</p>
       <div class="prewrap">
         <pre><span class="c"># clone &amp; install</span>
 git clone https://github.com/vovanduc/stage-drop.git
@@ -150,100 +190,216 @@ npm run dev       <span class="c"># http://localhost:8787</span>
     </section>
 
     <section id="gallery">
-      <h2>Screenshots</h2>
-      <p>Drop PNGs into <code>docs/assets/</code> with the names below — placeholders render until then.</p>
+      <h2 data-i18n="gallery.title">Ảnh chụp</h2>
+      <p data-i18n="gallery.body">Luồng demo local: upload → live URL → claim. Ảnh load từ <code>shot-*.js</code>.</p>
       <div class="gallery">
         <article class="shot">
           <figure>
-            <img
-              src="assets/01-ui.png"
-              alt="stage-drop upload UI — drag and drop a zip"
-              width="640"
-              height="400"
-              loading="lazy"
-              onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
-            />
-            <div class="placeholder" style="display:none" aria-hidden="true">
-              <strong>01-ui.png</strong>
-              <span>Upload UI placeholder<br/>drop file into docs/assets/</span>
-            </div>
-            <figcaption>01 — Upload UI</figcaption>
+            <img src="assets/01-ui.jpg" data-shot="ui" alt="UI upload stage-drop" width="640" height="400" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+            <div class="placeholder" style="display:none" aria-hidden="true"><strong>01-ui</strong><span>Upload UI</span></div>
+            <figcaption data-i18n="gallery.1">01 — UI upload</figcaption>
           </figure>
         </article>
         <article class="shot">
           <figure>
-            <img
-              src="assets/02-uploaded.png"
-              alt="stage-drop after upload showing live and claim URLs"
-              width="640"
-              height="400"
-              loading="lazy"
-              onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
-            />
-            <div class="placeholder" style="display:none" aria-hidden="true">
-              <strong>02-uploaded.png</strong>
-              <span>Post-upload result<br/>drop file into docs/assets/</span>
-            </div>
-            <figcaption>02 — Uploaded (live + claim)</figcaption>
+            <img src="assets/02-uploaded.jpg" data-shot="uploaded" alt="Sau upload: live + claim URL" width="640" height="400" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+            <div class="placeholder" style="display:none" aria-hidden="true"><strong>02-uploaded</strong><span>Post-upload</span></div>
+            <figcaption data-i18n="gallery.2">02 — Đã upload (live + claim)</figcaption>
           </figure>
         </article>
         <article class="shot">
           <figure>
-            <img
-              src="assets/03-live-site.png"
-              alt="Staged static site served at the live URL"
-              width="640"
-              height="400"
-              loading="lazy"
-              onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
-            />
-            <div class="placeholder" style="display:none" aria-hidden="true">
-              <strong>03-live-site.png</strong>
-              <span>Live staged site<br/>drop file into docs/assets/</span>
-            </div>
-            <figcaption>03 — Live staged site</figcaption>
+            <img src="assets/03-live-site.jpg" data-shot="live" alt="Site staged tại live URL" width="640" height="400" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+            <div class="placeholder" style="display:none" aria-hidden="true"><strong>03-live</strong><span>Live</span></div>
+            <figcaption data-i18n="gallery.3">03 — Site live</figcaption>
           </figure>
         </article>
         <article class="shot">
           <figure>
-            <img
-              src="assets/04-claimed.png"
-              alt="stage-drop claim confirmation after one-shot token"
-              width="640"
-              height="400"
-              loading="lazy"
-              onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
-            />
-            <div class="placeholder" style="display:none" aria-hidden="true">
-              <strong>04-claimed.png</strong>
-              <span>Claim confirmation<br/>drop file into docs/assets/</span>
-            </div>
-            <figcaption>04 — Claimed</figcaption>
+            <img src="assets/04-claimed.jpg" data-shot="claimed" alt="Xác nhận claim" width="640" height="400" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+            <div class="placeholder" style="display:none" aria-hidden="true"><strong>04-claimed</strong><span>Claimed</span></div>
+            <figcaption data-i18n="gallery.4">04 — Đã claim</figcaption>
           </figure>
         </article>
       </div>
     </section>
 
     <section id="links">
-      <h2>Links</h2>
+      <h2 data-i18n="links.title">Liên kết</h2>
       <div class="links">
-        <a href="https://github.com/vovanduc/stage-drop" target="_blank" rel="noopener">GitHub repo</a>
+        <a href="https://github.com/vovanduc/stage-drop" target="_blank" rel="noopener" data-i18n="links.repo">Repo GitHub</a>
         <a href="https://www.cloudflare.com/drop/" target="_blank" rel="noopener">Cloudflare Drop</a>
         <a href="https://www.cloudflare.com/drop/llms.txt" target="_blank" rel="noopener">llms.txt</a>
       </div>
     </section>
 
     <footer class="site">
-      <span>MIT © Duc Vo · Independent open-source companion to the blog article</span>
-      <span>Static docs only — API is <code>npm run dev</code></span>
+      <span data-i18n="footer.left">MIT © Duc Vo · Open-source đi kèm bài blog</span>
+      <span data-i18n="footer.right">Chỉ docs tĩnh — API là <code>npm run dev</code></span>
     </footer>
   </div>
 
+  <script src="shot-ui.js"></script>
+  <script src="shot-uploaded.js"></script>
+  <script src="shot-live.js"></script>
+  <script src="shot-claimed.js"></script>
   <script>
     (function () {
+      var THEME_KEY = 'stage-drop-theme';
+      var LANG_KEY = 'stage-drop-lang';
+      var root = document.documentElement;
+      var toggle = document.getElementById('theme-toggle');
+      var label = toggle && toggle.querySelector('.theme-label');
+      var btnVi = document.getElementById('lang-vi');
+      var btnEn = document.getElementById('lang-en');
+
+      var I18N = {
+        vi: {
+          'meta.title': 'stage-drop — staging tĩnh tức thì',
+          'meta.desc': 'stage-drop — staging site tĩnh tức thì. Kéo-thả zip, nhận URL tạm, claim trước khi hết hạn.',
+          'nav.how': 'Cách hoạt động',
+          'nav.arch': 'Kiến trúc',
+          'nav.qs': 'Bắt đầu nhanh',
+          'nav.gallery': 'Ảnh chụp',
+          'theme.toDark': 'Tối',
+          'theme.toLight': 'Sáng',
+          'theme.ariaToDark': 'Chuyển sang giao diện tối',
+          'theme.ariaToLight': 'Chuyển sang giao diện sáng',
+          'hero.pitch': '<strong>Staging site tĩnh tức thì</strong>, mang đi được: kéo-thả zip → nhận URL tạm → claim trước khi hết hạn.',
+          'badge.inspired': 'Lấy cảm hứng từ',
+          'callout.title': 'Trang này chỉ là docs tĩnh.',
+          'callout.body': ' API upload/claim chạy local (hoặc sau này trên Workers) — không chạy trên GitHub Pages. Clone repo và chạy <code>npm run dev</code> để thử server thật.',
+          'how.title': 'Cách hoạt động',
+          'how.upload.title': 'Upload',
+          'how.upload.body': 'Thả zip (≤10&nbsp;MB, ≤500 file) có <code>index.html</code>. Nhận live + claim URL.',
+          'how.live.title': 'Live URL',
+          'how.live.body': 'Site phục vụ dưới <code>/s/:siteId/</code> trong <strong>60 phút</strong> nếu chưa claim.',
+          'how.claim.title': 'Claim',
+          'how.claim.body': 'Token một lần (≥128-bit). Chỉ lưu hash; claim xóa hạn.',
+          'how.sweep.title': 'Sweep',
+          'how.sweep.body': 'Dọn định kỳ các site hết hạn chưa claim khỏi blob + meta store.',
+          'arch.title': 'Kiến trúc',
+          'arch.expand': 'Phóng to',
+          'arch.close': 'Đóng',
+          'arch.body': 'App Hono lõi đứng sau interface <code>BlobStore</code> và <code>MetaStore</code> mang đi được. Hiện tại: FS local + in-memory; R2/KV và S3/DynamoDB là adapter sau. Biểu đồ: <strong>Mermaid</strong> (+ SVG dự phòng).',
+          'arch.noscript': 'Bật JavaScript để xem Mermaid, hoặc xem chart trong README.',
+          'qs.title': 'Bắt đầu nhanh',
+          'qs.body': 'Chạy server thật trên máy — GitHub Pages chỉ host trang docs tĩnh này.',
+          'gallery.title': 'Ảnh chụp',
+          'gallery.body': 'Luồng demo local: upload → live URL → claim. Ảnh load từ <code>shot-*.js</code>.',
+          'gallery.1': '01 — UI upload',
+          'gallery.2': '02 — Đã upload (live + claim)',
+          'gallery.3': '03 — Site live',
+          'gallery.4': '04 — Đã claim',
+          'links.title': 'Liên kết',
+          'links.repo': 'Repo GitHub',
+          'footer.left': 'MIT © Duc Vo · Open-source đi kèm bài blog',
+          'footer.right': 'Chỉ docs tĩnh — API là <code>npm run dev</code>'
+        },
+        en: {
+          'meta.title': 'stage-drop — instant static staging',
+          'meta.desc': 'stage-drop — portable instant static-site staging. Drag-and-drop a zip, get a temporary live URL, claim before it expires.',
+          'nav.how': 'How it works',
+          'nav.arch': 'Architecture',
+          'nav.qs': 'Quickstart',
+          'nav.gallery': 'Screenshots',
+          'theme.toDark': 'Dark',
+          'theme.toLight': 'Light',
+          'theme.ariaToDark': 'Switch to dark theme',
+          'theme.ariaToLight': 'Switch to light theme',
+          'hero.pitch': 'Portable <strong>instant static-site staging</strong>: drag-and-drop a zip → get a temporary live URL → claim it before it expires.',
+          'badge.inspired': 'Inspired by',
+          'callout.title': 'This page is static docs.',
+          'callout.body': ' The live upload/claim API runs locally (or later on Workers) — not on GitHub Pages. Clone the repo and run <code>npm run dev</code> to try the real server.',
+          'how.title': 'How it works',
+          'how.upload.title': 'Upload',
+          'how.upload.body': 'Drop a zip (≤10&nbsp;MB, ≤500 files) with <code>index.html</code>. Get live + claim URLs back.',
+          'how.live.title': 'Live URL',
+          'how.live.body': 'Site is served under <code>/s/:siteId/</code> for <strong>60 minutes</strong> unless claimed.',
+          'how.claim.title': 'Claim',
+          'how.claim.body': 'One-shot token (≥128-bit). Only a hash is stored; claim clears expiry.',
+          'how.sweep.title': 'Sweep',
+          'how.sweep.body': 'Periodic cleanup removes expired unclaimed sites from blob + meta stores.',
+          'arch.title': 'Architecture',
+          'arch.expand': 'Expand',
+          'arch.close': 'Close',
+          'arch.body': 'Core Hono app behind portable <code>BlobStore</code> and <code>MetaStore</code> interfaces. Local FS + in-memory today; R2/KV and S3/DynamoDB are future adapters. Diagram: <strong>Mermaid</strong> (+ inline SVG fallback).',
+          'arch.noscript': 'Enable JavaScript for the Mermaid diagram, or see the chart in the README.',
+          'qs.title': 'Quickstart',
+          'qs.body': 'Run the real server locally — GitHub Pages only hosts this static companion site.',
+          'gallery.title': 'Screenshots',
+          'gallery.body': 'Local demo flow: upload → live URL → claim. Shots load from <code>shot-*.js</code>.',
+          'gallery.1': '01 — Upload UI',
+          'gallery.2': '02 — Uploaded (live + claim)',
+          'gallery.3': '03 — Live staged site',
+          'gallery.4': '04 — Claimed',
+          'links.title': 'Links',
+          'links.repo': 'GitHub repo',
+          'footer.left': 'MIT © Duc Vo · Independent open-source companion to the blog article',
+          'footer.right': 'Static docs only — API is <code>npm run dev</code>'
+        }
+      };
+
+      function currentTheme() {
+        return root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+      }
+      function currentLang() {
+        return root.getAttribute('lang') === 'en' ? 'en' : 'vi';
+      }
+
+      function applyI18n(lang) {
+        var dict = I18N[lang] || I18N.vi;
+        document.querySelectorAll('[data-i18n]').forEach(function (el) {
+          var key = el.getAttribute('data-i18n');
+          if (!dict[key]) return;
+          el.innerHTML = dict[key];
+        });
+        document.title = dict['meta.title'];
+        var meta = document.querySelector('meta[name="description"]');
+        if (meta) meta.setAttribute('content', dict['meta.desc']);
+        root.setAttribute('lang', lang);
+        if (btnVi) btnVi.setAttribute('aria-pressed', lang === 'vi' ? 'true' : 'false');
+        if (btnEn) btnEn.setAttribute('aria-pressed', lang === 'en' ? 'true' : 'false');
+        syncThemeLabel();
+      }
+
+      function syncThemeLabel() {
+        if (!toggle) return;
+        var dark = currentTheme() === 'dark';
+        var dict = I18N[currentLang()] || I18N.vi;
+        toggle.setAttribute('aria-label', dark ? dict['theme.ariaToLight'] : dict['theme.ariaToDark']);
+        if (label) label.textContent = dark ? dict['theme.toLight'] : dict['theme.toDark'];
+      }
+
+      function setTheme(theme, persist) {
+        root.setAttribute('data-theme', theme);
+        if (persist) {
+          try { localStorage.setItem(THEME_KEY, theme); } catch (e) {}
+        }
+        syncThemeLabel();
+        renderMermaid(true);
+      }
+
+      function setLang(lang, persist) {
+        if (persist) {
+          try { localStorage.setItem(LANG_KEY, lang); } catch (e) {}
+        }
+        applyI18n(lang);
+      }
+
+      applyI18n(currentLang());
+
+      if (toggle) {
+        toggle.addEventListener('click', function () {
+          setTheme(currentTheme() === 'dark' ? 'light' : 'dark', true);
+        });
+      }
+      if (btnVi) btnVi.addEventListener('click', function () { setLang('vi', true); });
+      if (btnEn) btnEn.addEventListener('click', function () { setLang('en', true); });
+
       function showSvgFallback() {
         var svg = document.getElementById('arch-svg');
-        var mermaidEl = document.querySelector('.diagram .mermaid');
+        var mermaidEl = document.querySelector('#diagram-inline .mermaid');
         if (svg) {
           svg.style.display = 'block';
           svg.classList.remove('diagram-fallback');
@@ -251,48 +407,109 @@ npm run dev       <span class="c"># http://localhost:8787</span>
         if (mermaidEl) mermaidEl.style.display = 'none';
       }
 
-      function initMermaid() {
-        if (typeof mermaid === 'undefined') {
-          showSvgFallback();
-          return;
+      function themeVars(dark) {
+        if (dark) {
+          return {
+            primaryColor: '#141b2d', primaryTextColor: '#e8eefc', primaryBorderColor: '#243049',
+            lineColor: '#5b8cff', secondaryColor: '#0d1424', tertiaryColor: '#1a2744',
+            background: '#0b1020', mainBkg: '#141b2d', nodeBorder: '#243049',
+            clusterBkg: '#0d1424', titleColor: '#e8eefc', edgeLabelBackground: '#0b1020'
+          };
         }
+        return {
+          primaryColor: '#ffffff', primaryTextColor: '#152033', primaryBorderColor: '#d8e0ef',
+          lineColor: '#3b6ef5', secondaryColor: '#eef2fa', tertiaryColor: '#dfe8ff',
+          background: '#f4f6fb', mainBkg: '#ffffff', nodeBorder: '#d8e0ef',
+          clusterBkg: '#eef2fa', titleColor: '#152033', edgeLabelBackground: '#ffffff'
+        };
+      }
+
+      var mermaidReady = false;
+      function renderMermaid(force) {
+        if (typeof mermaid === 'undefined') { showSvgFallback(); return; }
+        var dark = currentTheme() === 'dark';
+        var host = document.querySelector('#diagram-inline .mermaid');
+        if (!host) return;
         try {
-          mermaid.initialize({
-            startOnLoad: false,
-            theme: 'dark',
-            themeVariables: {
-              primaryColor: '#141b2d',
-              primaryTextColor: '#e8eefc',
-              primaryBorderColor: '#243049',
-              lineColor: '#5b8cff',
-              secondaryColor: '#0d1424',
-              tertiaryColor: '#1a2744',
-              background: '#0b1020',
-              mainBkg: '#141b2d',
-              nodeBorder: '#243049',
-              clusterBkg: '#0d1424',
-              titleColor: '#e8eefc',
-              edgeLabelBackground: '#0b1020',
-            },
-            flowchart: { curve: 'basis', htmlLabels: true },
-          });
-          mermaid.run({ querySelector: '.mermaid' }).catch(showSvgFallback);
-        } catch (e) {
-          showSvgFallback();
-        }
+          if (!mermaidReady || force) {
+            mermaid.initialize({
+              startOnLoad: false,
+              theme: dark ? 'dark' : 'default',
+              themeVariables: themeVars(dark),
+              flowchart: { curve: 'basis', htmlLabels: true }
+            });
+            mermaidReady = true;
+          }
+          var src = host.getAttribute('data-src');
+          if (!src) {
+            src = host.textContent.trim();
+            host.setAttribute('data-src', src);
+          }
+          host.removeAttribute('data-processed');
+          host.style.display = 'flex';
+          host.innerHTML = src;
+          var svgEl = document.getElementById('arch-svg');
+          if (svgEl) { svgEl.style.display = 'none'; svgEl.classList.add('diagram-fallback'); }
+          mermaid.run({ nodes: [host] }).catch(showSvgFallback);
+        } catch (e) { showSvgFallback(); }
       }
 
+      function initMermaid() { renderMermaid(true); }
       if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function () {
-          setTimeout(initMermaid, 50);
-        });
-      } else {
-        setTimeout(initMermaid, 50);
+        document.addEventListener('DOMContentLoaded', function () { setTimeout(initMermaid, 50); });
+      } else { setTimeout(initMermaid, 50); }
+      setTimeout(function () { if (typeof mermaid === 'undefined') showSvgFallback(); }, 4000);
+
+      var shots = window.STAGE_DROP_SHOTS || {};
+      document.querySelectorAll('img[data-shot]').forEach(function (img) {
+        var key = img.getAttribute('data-shot');
+        if (shots[key]) {
+          img.src = shots[key];
+          img.removeAttribute('onerror');
+          var ph = img.nextElementSibling;
+          if (ph && ph.classList.contains('placeholder')) ph.style.display = 'none';
+        }
+      });
+
+      var modal = document.getElementById('diagram-modal');
+      var expandBtn = document.getElementById('diagram-expand');
+      var modalBody = document.getElementById('diagram-modal-body');
+      var lastFocus = null;
+
+      function openModal() {
+        if (!modal || !modalBody) return;
+        lastFocus = document.activeElement;
+        var inline = document.getElementById('diagram-inline');
+        var rendered = inline.querySelector('.mermaid svg');
+        var fallbackSvg = document.getElementById('arch-svg');
+        modalBody.innerHTML = '';
+        if (rendered) modalBody.appendChild(rendered.cloneNode(true));
+        else if (fallbackSvg && fallbackSvg.style.display !== 'none') modalBody.appendChild(fallbackSvg.cloneNode(true));
+        else modalBody.appendChild(inline.cloneNode(true));
+        if (typeof modal.showModal === 'function') modal.showModal();
+        else { modal.hidden = false; modal.setAttribute('open', ''); }
+        var closeBtn = document.getElementById('diagram-close');
+        if (closeBtn) closeBtn.focus();
       }
 
-      setTimeout(function () {
-        if (typeof mermaid === 'undefined') showSvgFallback();
-      }, 4000);
+      function closeModal() {
+        if (!modal) return;
+        if (typeof modal.close === 'function') modal.close();
+        else { modal.hidden = true; modal.removeAttribute('open'); }
+        modalBody.innerHTML = '';
+        if (lastFocus && lastFocus.focus) lastFocus.focus();
+      }
+
+      if (expandBtn) expandBtn.addEventListener('click', openModal);
+      if (modal) {
+        modal.addEventListener('click', function (e) {
+          if (e.target && e.target.hasAttribute('data-close')) closeModal();
+        });
+        modal.addEventListener('cancel', function (e) { e.preventDefault(); closeModal(); });
+      }
+      document.querySelectorAll('#diagram-close').forEach(function (el) {
+        el.addEventListener('click', closeModal);
+      });
     })();
   </script>
 </body>
