@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>stage-drop — instant static staging</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --card: #141b2d;
+      --accent: #5b8cff;
+      --ok: #3dd68c;
+      --warn: #ffb020;
+      --text: #e8eefc;
+      --muted: #9aa8c7;
+      --border: #243049;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; font-family: ui-sans-serif, system-ui, sans-serif;
+      background: radial-gradient(1200px 600px at 20% -10%, #1a2744, var(--bg));
+      color: var(--text); display: flex; align-items: center; justify-content: center; padding: 24px;
+    }
+    main {
+      width: min(560px, 100%); background: var(--card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 28px; box-shadow: 0 20px 60px rgba(0,0,0,.35);
+    }
+    h1 { margin: 0 0 6px; font-size: 1.45rem; }
+    p.lead { margin: 0 0 20px; color: var(--muted); line-height: 1.5; font-size: .95rem; }
+    #drop {
+      border: 2px dashed var(--border); border-radius: 12px; padding: 36px 20px;
+      text-align: center; cursor: pointer; transition: border-color .15s, background .15s;
+      background: rgba(255,255,255,.02);
+    }
+    #drop.drag { border-color: var(--accent); background: rgba(91,140,255,.08); }
+    #drop strong { display: block; margin-bottom: 6px; }
+    #drop span { color: var(--muted); font-size: .9rem; }
+    input[type=file] { display: none; }
+    .result { margin-top: 18px; display: none; }
+    .result.show { display: block; }
+    .row { margin: 10px 0; padding: 12px; background: #0d1424; border-radius: 10px; border: 1px solid var(--border); }
+    .row label { display: block; font-size: .75rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 4px; }
+    .row a, .row code { color: var(--ok); word-break: break-all; font-size: .9rem; }
+    .err { color: #ff6b7a; margin-top: 12px; display: none; }
+    .err.show { display: block; }
+    footer { margin-top: 18px; font-size: .8rem; color: var(--muted); }
+    footer a { color: var(--accent); }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>stage-drop</h1>
+    <p class="lead">Drop a zip of a static site. Get a live URL for 60 minutes — claim it to keep forever (local demo).</p>
+    <div id="drop" tabindex="0" role="button" aria-label="Upload zip">
+      <strong>Drag &amp; drop a .zip here</strong>
+      <span>or click to choose · max 10&nbsp;MB · 500 files</span>
+    </div>
+    <input id="file" type="file" accept=".zip,application/zip" />
+    <div class="err" id="err"></div>
+    <div class="result" id="result">
+      <div class="row"><label>Live URL</label><a id="live" href="#" target="_blank" rel="noopener"></a></div>
+      <div class="row"><label>Claim URL (one-shot)</label><a id="claim" href="#" target="_blank" rel="noopener"></a></div>
+      <div class="row"><label>Expires</label><code id="exp"></code></div>
+    </div>
+    <footer>
+      Inspired by <a href="https://www.cloudflare.com/drop/" target="_blank" rel="noopener">Cloudflare Drop</a>
+      · <a href="https://www.cloudflare.com/drop/llms.txt" target="_blank" rel="noopener">llms.txt</a>
+      · MIT
+    </footer>
+  </main>
+  <script>
+    const drop = document.getElementById('drop');
+    const input = document.getElementById('file');
+    const err = document.getElementById('err');
+    const result = document.getElementById('result');
+
+    function showError(msg) {
+      err.textContent = msg;
+      err.classList.add('show');
+      result.classList.remove('show');
+    }
+    function showResult(data) {
+      err.classList.remove('show');
+      document.getElementById('live').href = data.liveUrl;
+      document.getElementById('live').textContent = data.liveUrl;
+      document.getElementById('claim').href = data.claimUrl;
+      document.getElementById('claim').textContent = data.claimUrl;
+      document.getElementById('exp').textContent = new Date(data.expiresAt).toLocaleString();
+      result.classList.add('show');
+    }
+
+    async function upload(file) {
+      if (!file) return;
+      if (!file.name.toLowerCase().endsWith('.zip') && file.type !== 'application/zip') {
+        showError('Please upload a .zip file');
+        return;
+      }
+      drop.querySelector('strong').textContent = 'Uploading…';
+      try {
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'content-type': 'application/zip' },
+          body: file,
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || res.statusText);
+        showResult(data);
+      } catch (e) {
+        showError(e.message || String(e));
+      } finally {
+        drop.querySelector('strong').textContent = 'Drag & drop a .zip here';
+      }
+    }
+
+    drop.addEventListener('click', () => input.click());
+    drop.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') input.click(); });
+    input.addEventListener('change', () => upload(input.files[0]));
+    ['dragenter','dragover'].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add('drag'); }));
+    ['dragleave','drop'].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove('drag'); }));
+    drop.addEventListener('drop', (e) => upload(e.dataTransfer.files[0]));
+  </script>
+</body>
+</html>
