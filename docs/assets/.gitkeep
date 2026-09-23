@@ -1,0 +1,6 @@
+# Screenshot placeholders for the docs gallery.
+# Drop PNGs here (no HTML rewrite needed):
+#   01-ui.png         — upload UI
+#   02-uploaded.png   — after upload (live + claim URLs)
+#   03-live-site.png  — served staged site
+#   04-claimed.png    — post-claim confirmation

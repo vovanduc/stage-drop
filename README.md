@@ -71,6 +71,14 @@ Not a production CDN: no malware scan, phishing heuristics, or CAPTCHA.
 | `npm run build` | Compile to `dist/` |
 | `npm start` | Run compiled server |
 
+## Docs site
+
+Static companion landing (GitHub Pages, no upload API):
+
+**https://vovanduc.github.io/stage-drop/**
+
+> The live upload/claim server does **not** run on Pages. Use `npm run dev` locally (or later Workers). The URL above is live after Pages is enabled for `/docs` on `master`.
+
 ## License
 
 [MIT](./LICENSE) © Duc Vo
