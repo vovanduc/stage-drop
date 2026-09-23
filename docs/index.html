@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="stage-drop — portable instant static-site staging. Drag-and-drop a zip, get a temporary live URL, claim before it expires." />
+  <title>stage-drop — instant static staging</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js" defer></script>
+</head>
+<body>
+  <div class="wrap">
+    <nav class="nav" aria-label="Primary">
+      <a class="nav-brand" href="./">stage<span>-</span>drop</a>
+      <div class="nav-links">
+        <a href="#how">How it works</a>
+        <a href="#architecture">Architecture</a>
+        <a href="#quickstart">Quickstart</a>
+        <a href="#gallery">Screenshots</a>
+        <a href="https://github.com/vovanduc/stage-drop">GitHub</a>
+      </div>
+    </nav>
+
+    <header class="hero">
+      <h1>stage-drop</h1>
+      <p class="pitch">
+        Portable <strong>instant static-site staging</strong>: drag-and-drop a zip →
+        get a temporary live URL → claim it before it expires.
+      </p>
+      <div class="badges" aria-label="Project badges">
+        <span class="badge accent">
+          Inspired by
+          <a href="https://www.cloudflare.com/drop/" target="_blank" rel="noopener">Cloudflare Drop</a>
+        </span>
+        <span class="badge ok">MIT</span>
+        <span class="badge">TypeScript + Hono</span>
+      </div>
+
+      <div class="callout" role="note">
+        <strong>This page is static docs.</strong>
+        The live upload/claim API runs locally (or later on Workers) — not on GitHub Pages.
+        Clone the repo and run <code>npm run dev</code> to try the real server.
+      </div>
+    </header>
+
+    <section id="how">
+      <h2>How it works</h2>
+      <div class="flow">
+        <article class="step">
+          <h3>Upload</h3>
+          <p>Drop a zip (≤10&nbsp;MB, ≤500 files) with <code>index.html</code>. Get live + claim URLs back.</p>
+        </article>
+        <article class="step">
+          <h3>Live URL</h3>
+          <p>Site is served under <code>/s/:siteId/</code> for <strong>60 minutes</strong> unless claimed.</p>
+        </article>
+        <article class="step">
+          <h3>Claim</h3>
+          <p>One-shot token (≥128-bit). Only a hash is stored; claim clears expiry.</p>
+        </article>
+        <article class="step">
+          <h3>Sweep</h3>
+          <p>Periodic cleanup removes expired unclaimed sites from blob + meta stores.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="architecture">
+      <h2>Architecture</h2>
+      <p>
+        Core Hono app behind portable <code>BlobStore</code> and <code>MetaStore</code> interfaces.
+        Local FS + in-memory today; R2/KV and S3/DynamoDB are future adapters.
+      </p>
+      <div class="diagram">
+        <pre class="mermaid">
+flowchart LR
+  UI["Web UI / curl"] --> Core["Core Hono\nupload · claim · serve · expire"]
+  Core --> Blob["BlobStore interface"]
+  Core --> Meta["MetaStore interface"]
+  Blob --> FS["Local FS blobs"]
+  Meta --> Mem["In-memory meta\n(SQLite-ready later)"]
+  Blob -. future .-> R2["R2 / S3"]
+  Meta -. future .-> KV["KV / DynamoDB TTL"]
+        </pre>
+        <noscript>
+          <p class="diagram-fallback" style="display:block">
+            Enable JavaScript for the Mermaid diagram, or see the same chart in the
+            <a href="https://github.com/vovanduc/stage-drop#architecture">README</a>.
+          </p>
+        </noscript>
+        <!-- Inline SVG fallback if Mermaid CDN fails -->
+        <svg id="arch-svg" class="diagram-fallback" viewBox="0 0 720 220" width="100%" height="220" role="img" aria-label="Architecture: UI to Core Hono to BlobStore and MetaStore">
+          <defs>
+            <style>
+              .n { fill:#141b2d; stroke:#243049; stroke-width:1.5; }
+              .t { fill:#e8eefc; font:600 13px ui-sans-serif,system-ui,sans-serif; }
+              .s { fill:#9aa8c7; font:11px ui-sans-serif,system-ui,sans-serif; }
+              .e { stroke:#5b8cff; stroke-width:1.5; fill:none; marker-end:url(#arr); }
+              .d { stroke:#5b8cff; stroke-width:1.2; stroke-dasharray:5 4; fill:none; marker-end:url(#arr); }
+            </style>
+            <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+              <path d="M0,0 L6,3 L0,6 Z" fill="#5b8cff"/>
+            </marker>
+          </defs>
+          <rect class="n" x="16" y="80" width="110" height="56" rx="10"/>
+          <text class="t" x="71" y="106" text-anchor="middle">Web UI / curl</text>
+          <rect class="n" x="170" y="70" width="150" height="76" rx="10"/>
+          <text class="t" x="245" y="98" text-anchor="middle">Core Hono</text>
+          <text class="s" x="245" y="118" text-anchor="middle">upload · claim · serve</text>
+          <rect class="n" x="370" y="24" width="130" height="56" rx="10"/>
+          <text class="t" x="435" y="50" text-anchor="middle">BlobStore</text>
+          <text class="s" x="435" y="68" text-anchor="middle">interface</text>
+          <rect class="n" x="370" y="140" width="130" height="56" rx="10"/>
+          <text class="t" x="435" y="166" text-anchor="middle">MetaStore</text>
+          <text class="s" x="435" y="184" text-anchor="middle">interface</text>
+          <rect class="n" x="550" y="8" width="150" height="44" rx="10"/>
+          <text class="t" x="625" y="35" text-anchor="middle">Local FS</text>
+          <rect class="n" x="550" y="60" width="150" height="44" rx="10"/>
+          <text class="s" x="625" y="87" text-anchor="middle">future: R2 / S3</text>
+          <rect class="n" x="550" y="124" width="150" height="44" rx="10"/>
+          <text class="t" x="625" y="151" text-anchor="middle">In-memory</text>
+          <rect class="n" x="550" y="176" width="150" height="44" rx="10"/>
+          <text class="s" x="625" y="203" text-anchor="middle">future: KV / DynamoDB</text>
+          <path class="e" d="M126,108 H170"/>
+          <path class="e" d="M320,95 H370"/>
+          <path class="e" d="M320,120 C340,120 350,168 370,168"/>
+          <path class="e" d="M500,52 H550"/>
+          <path class="d" d="M500,52 C520,52 530,82 550,82"/>
+          <path class="e" d="M500,168 H550"/>
+          <path class="d" d="M500,168 C520,168 530,198 550,198"/>
+        </svg>
+      </div>
+    </section>
+
+    <section id="quickstart">
+      <h2>Quickstart</h2>
+      <p>Run the real server locally — GitHub Pages only hosts this static companion site.</p>
+      <div class="prewrap">
+        <pre><span class="c"># clone &amp; install</span>
+git clone https://github.com/vovanduc/stage-drop.git
+cd stage-drop
+npm install
+
+<span class="c"># verify + start</span>
+npm test          <span class="c"># should be green</span>
+npm run dev       <span class="c"># http://localhost:8787</span>
+
+<span class="g"># then open the UI, drop a zip, live URL under /s/:siteId/</span></pre>
+      </div>
+    </section>
+
+    <section id="gallery">
+      <h2>Screenshots</h2>
+      <p>Drop PNGs into <code>docs/assets/</code> with the names below — placeholders render until then.</p>
+      <div class="gallery">
+        <article class="shot">
+          <figure>
+            <img
+              src="assets/01-ui.png"
+              alt="stage-drop upload UI — drag and drop a zip"
+              width="640"
+              height="400"
+              loading="lazy"
+              onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
+            />
+            <div class="placeholder" style="display:none" aria-hidden="true">
+              <strong>01-ui.png</strong>
+              <span>Upload UI placeholder<br/>drop file into docs/assets/</span>
+            </div>
+            <figcaption>01 — Upload UI</figcaption>
+          </figure>
+        </article>
+        <article class="shot">
+          <figure>
+            <img
+              src="assets/02-uploaded.png"
+              alt="stage-drop after upload showing live and claim URLs"
+              width="640"
+              height="400"
+              loading="lazy"
+              onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
+            />
+            <div class="placeholder" style="display:none" aria-hidden="true">
+              <strong>02-uploaded.png</strong>
+              <span>Post-upload result<br/>drop file into docs/assets/</span>
+            </div>
+            <figcaption>02 — Uploaded (live + claim)</figcaption>
+          </figure>
+        </article>
+        <article class="shot">
+          <figure>
+            <img
+              src="assets/03-live-site.png"
+              alt="Staged static site served at the live URL"
+              width="640"
+              height="400"
+              loading="lazy"
+              onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
+            />
+            <div class="placeholder" style="display:none" aria-hidden="true">
+              <strong>03-live-site.png</strong>
+              <span>Live staged site<br/>drop file into docs/assets/</span>
+            </div>
+            <figcaption>03 — Live staged site</figcaption>
+          </figure>
+        </article>
+        <article class="shot">
+          <figure>
+            <img
+              src="assets/04-claimed.png"
+              alt="stage-drop claim confirmation after one-shot token"
+              width="640"
+              height="400"
+              loading="lazy"
+              onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
+            />
+            <div class="placeholder" style="display:none" aria-hidden="true">
+              <strong>04-claimed.png</strong>
+              <span>Claim confirmation<br/>drop file into docs/assets/</span>
+            </div>
+            <figcaption>04 — Claimed</figcaption>
+          </figure>
+        </article>
+      </div>
+    </section>
+
+    <section id="links">
+      <h2>Links</h2>
+      <div class="links">
+        <a href="https://github.com/vovanduc/stage-drop" target="_blank" rel="noopener">GitHub repo</a>
+        <a href="https://www.cloudflare.com/drop/" target="_blank" rel="noopener">Cloudflare Drop</a>
+        <a href="https://www.cloudflare.com/drop/llms.txt" target="_blank" rel="noopener">llms.txt</a>
+      </div>
+    </section>
+
+    <footer class="site">
+      <span>MIT © Duc Vo · Independent open-source companion to the blog article</span>
+      <span>Static docs only — API is <code>npm run dev</code></span>
+    </footer>
+  </div>
+
+  <script>
+    (function () {
+      function showSvgFallback() {
+        var svg = document.getElementById('arch-svg');
+        var mermaidEl = document.querySelector('.diagram .mermaid');
+        if (svg) {
+          svg.style.display = 'block';
+          svg.classList.remove('diagram-fallback');
+        }
+        if (mermaidEl) mermaidEl.style.display = 'none';
+      }
+
+      function initMermaid() {
+        if (typeof mermaid === 'undefined') {
+          showSvgFallback();
+          return;
+        }
+        try {
+          mermaid.initialize({
+            startOnLoad: false,
+            theme: 'dark',
+            themeVariables: {
+              primaryColor: '#141b2d',
+              primaryTextColor: '#e8eefc',
+              primaryBorderColor: '#243049',
+              lineColor: '#5b8cff',
+              secondaryColor: '#0d1424',
+              tertiaryColor: '#1a2744',
+              background: '#0b1020',
+              mainBkg: '#141b2d',
+              nodeBorder: '#243049',
+              clusterBkg: '#0d1424',
+              titleColor: '#e8eefc',
+              edgeLabelBackground: '#0b1020',
+            },
+            flowchart: { curve: 'basis', htmlLabels: true },
+          });
+          mermaid.run({ querySelector: '.mermaid' }).catch(showSvgFallback);
+        } catch (e) {
+          showSvgFallback();
+        }
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function () {
+          setTimeout(initMermaid, 50);
+        });
+      } else {
+        setTimeout(initMermaid, 50);
+      }
+
+      setTimeout(function () {
+        if (typeof mermaid === 'undefined') showSvgFallback();
+      }, 4000);
+    })();
+  </script>
+</body>
+</html>
