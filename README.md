@@ -82,6 +82,12 @@ Static companion landing (GitHub Pages, no upload API):
 
 Skin: **Custom polish** (hand-rolled `docs/index.html` + `styles.css`; reviewed 2026-09-23, keep current).
 
+## Agent setup
+
+For AI agents (Claude, OpenCode, Orca, Cursor, Windsurf, …) working on this repo — portable Cloudflare skills + MCP, not host-locked:
+
+→ **[docs/agent-setup.md](./docs/agent-setup.md)** (official prompt: [developers.cloudflare.com/agent-setup/prompt.md](https://developers.cloudflare.com/agent-setup/prompt.md))
+
 ## License
 
 [MIT](./LICENSE) © Duc Vo
