@@ -1,0 +1,31 @@
+{
+  "name": "stage-drop",
+  "version": "0.1.0",
+  "description": "Portable instant static-site staging: drag-and-drop → temporary live URL → claim. Inspired by Cloudflare Drop.",
+  "type": "module",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "start": "node dist/server.js",
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "keywords": ["static-site", "staging", "hono", "local-first"],
+  "author": "Duc Vo",
+  "license": "MIT",
+  "engines": { "node": ">=20" },
+  "dependencies": {
+    "@hono/node-server": "^2.1.1",
+    "adm-zip": "^0.6.1",
+    "hono": "^4.13.8",
+    "nanoid": "^5.1.16"
+  },
+  "devDependencies": {
+    "@types/adm-zip": "^0.5.8",
+    "@types/node": "^20.19.43",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "vitest": "^2.1.9"
+  }
+}
