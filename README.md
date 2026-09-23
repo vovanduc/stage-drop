@@ -30,7 +30,7 @@ curl -sS -X POST http://localhost:8787/api/upload \
 
 | Action | Behavior |
 |--------|----------|
-| Upload | Zip (≤10 MB, ≤500 files) → `{ liveUrl, claimUrl }` |
+| Upload | Zip (≤10 MB, ≤500 files) → `{ liveUrl, claimUrl }` |
 | Serve | `GET /s/:siteId/*` — **410** if expired & unclaimed |
 | Claim | One-shot token (≥128-bit); store **hash only**; claim clears expiry |
 | Sweep | Periodic cleanup of expired unclaimed sites |
@@ -54,7 +54,7 @@ flowchart LR
 
 ## Security (local demo)
 
-- Zip max **10 MB**, max **500** files
+- Zip max **10 MB**, max **500** files
 - **Zip-slip** blocked (`..`, absolute paths)
 - Content-type **allowlist** by extension
 - In-memory **IP rate limit** on upload
@@ -71,6 +71,7 @@ Not a production CDN: no malware scan, phishing heuristics, or CAPTCHA.
 | `npm run build` | Compile to `dist/` |
 | `npm start` | Run compiled server |
 
+
 ## Docs site
 
 Static companion landing (GitHub Pages, no upload API):
@@ -78,6 +79,8 @@ Static companion landing (GitHub Pages, no upload API):
 **https://vovanduc.github.io/stage-drop/**
 
 > The live upload/claim server does **not** run on Pages. Use `npm run dev` locally (or later Workers). The URL above is live after Pages is enabled for `/docs` on `master`.
+
+Skin: **Custom polish** (hand-rolled `docs/index.html` + `styles.css`; reviewed 2026-09-23, keep current).
 
 ## License
 
