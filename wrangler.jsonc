@@ -1,0 +1,34 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "lab",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-09-23",
+  // Assets: public/ UI. Worker runs first (API/claim/sites); static served via ASSETS binding
+  // under /stage-drop/ by rewriting paths in src/worker.ts (ASSETS root is public/).
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "html_handling": "auto-trailing-slash",
+    "run_worker_first": true
+  },
+  "r2_buckets": [
+    {
+      "binding": "BLOBS",
+      "bucket_name": "stage-drop-blobs"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "META",
+      // Replace after: npx wrangler kv namespace create META
+      // (or Dashboard → Workers → KV → Create). Paste the namespace id here.
+      "id": "REPLACE_WITH_KV_NAMESPACE_ID"
+    }
+  ],
+  "triggers": {
+    "crons": ["*/5 * * * *"]
+  },
+  "observability": {
+    "enabled": true
+  }
+}

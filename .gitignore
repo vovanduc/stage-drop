@@ -5,3 +5,6 @@ data/
 .DS_Store
 coverage/
 .tmp/
+.wrangler/
+.dev.vars
+worker-configuration.d.ts
