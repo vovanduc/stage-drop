@@ -2,9 +2,22 @@
 
 Portable **instant static-site staging**: drag-and-drop a zip → get a temporary live URL → claim it before it expires.
 
-Inspired by [Cloudflare Drop](https://www.cloudflare.com/drop/) ([llms.txt](https://www.cloudflare.com/drop/llms.txt)). This is an independent open-source clone focused on a **portable core** + local adapters. Cloud adapters (Workers/R2/KV, Lambda/S3/DynamoDB) are intentionally out of scope for v0.1.
+Inspired by [Cloudflare Drop](https://www.cloudflare.com/drop/) ([llms.txt](https://www.cloudflare.com/drop/llms.txt)). Independent open-source clone: **portable Hono core** + swappable adapters (local FS/memory today; **Cloudflare R2 + KV** for the lab Worker).
 
-## Quickstart (≤5 minutes)
+## Lab URL (Cloudflare Workers)
+
+| | |
+|--|--|
+| **App** | https://lab.vovanduc.tech/stage-drop/ |
+| **Health** | https://lab.vovanduc.tech/stage-drop/health |
+| **Worker** | name `lab` (Custom Domain `lab.vovanduc.tech`) |
+| **Docs site** | https://vovanduc.github.io/stage-drop/ (GitHub Pages from `docs/` — **no upload API**) |
+
+Pages vs lab: **Pages** = bilingual marketing/docs skin under `docs/`. **Lab Worker** = real upload/claim/serve under `/stage-drop`. Do not restyle `docs/` when changing the Worker.
+
+Ops checklist (R2/KV/secrets/deploy): see **[LAB.md](./LAB.md)**.
+
+## Quickstart — local Node (≤5 minutes)
 
 ```bash
 git clone https://github.com/vovanduc/stage-drop.git
@@ -26,6 +39,19 @@ curl -sS -X POST http://localhost:8787/api/upload \
   --data-binary @site.zip | jq
 ```
 
+## Quickstart — Cloudflare Workers (lab)
+
+```bash
+npm install
+# Create R2 + KV, paste KV id into wrangler.jsonc (see LAB.md)
+npx wrangler r2 bucket create stage-drop-blobs
+npx wrangler kv namespace create META
+npm run deploy    # wrangler deploy → Worker "lab"
+# or locally: npm run dev:worker
+```
+
+Requires Wrangler auth and a filled `kv_namespaces[0].id`. CI: set GitHub secrets `CLOUDFLARE_API_TOKEN` + `CLOUDFLARE_ACCOUNT_ID` (workflow `.github/workflows/deploy-lab.yml`).
+
 ## Product behavior
 
 | Action | Behavior |
@@ -33,7 +59,7 @@ curl -sS -X POST http://localhost:8787/api/upload \
 | Upload | Zip (≤10 MB, ≤500 files) → `{ liveUrl, claimUrl }` |
 | Serve | `GET /s/:siteId/*` — **410** if expired & unclaimed |
 | Claim | One-shot token (≥128-bit); store **hash only**; claim clears expiry |
-| Sweep | Periodic cleanup of expired unclaimed sites |
+| Sweep | Periodic cleanup of expired unclaimed sites (local interval / Worker cron `*/5 * * * *`) |
 
 ## Architecture
 
@@ -43,42 +69,42 @@ flowchart LR
   Core --> Blob["BlobStore interface"]
   Core --> Meta["MetaStore interface"]
   Blob --> FS["Local FS blobs"]
-  Meta --> Mem["In-memory meta\n(SQLite-ready later)"]
-  Blob -. future .-> R2["R2 / S3"]
-  Meta -. future .-> KV["KV / DynamoDB TTL"]
+  Meta --> Mem["In-memory meta"]
+  Blob --> R2["R2BlobStore"]
+  Meta --> KV["KvMetaStore"]
 ```
 
-- **Core**: TypeScript + [Hono](https://hono.dev) — portable HTTP surface.
-- **BlobStore**: local filesystem today; swap-in for object storage later.
-- **MetaStore**: in-memory map today; same interface for SQLite / KV / DynamoDB.
+- **Core**: TypeScript + [Hono](https://hono.dev) — portable HTTP surface (`createApp`).
+- **Zip**: [fflate](https://github.com/101arrowz/fflate) (Uint8Array) — same path on Node and Workers.
+- **Local**: `FsBlobStore` + `MemoryMetaStore` via `src/server.ts`.
+- **Workers**: `R2BlobStore` + `KvMetaStore` via `src/worker.ts`, base path `/stage-drop`.
 
-## Security (local demo)
+## Security (lab / local demo)
 
 - Zip max **10 MB**, max **500** files
 - **Zip-slip** blocked (`..`, absolute paths)
 - Content-type **allowlist** by extension
-- In-memory **IP rate limit** on upload
-- Claim tokens: `crypto.randomBytes(16)` → hex; SHA-256 hash only in meta
+- In-memory **IP rate limit** on upload (ephemeral per isolate on Workers — OK for demos)
+- Claim tokens: 128-bit random → hex; SHA-256 hash only in meta
 
 Not a production CDN: no malware scan, phishing heuristics, or CAPTCHA.
 
 ## Scripts
 
 | Script | Purpose |
-|--------|---------|
-| `npm run dev` | Local server with reload (`tsx watch`) |
+|--------|----------|
+| `npm run dev` | Local Node server with reload (`tsx watch`) |
+| `npm run dev:worker` | `wrangler dev` (local Workers runtime + R2/KV sim) |
+| `npm run deploy` | `wrangler deploy` to Worker `lab` |
 | `npm test` | Vitest suite |
 | `npm run build` | Compile to `dist/` |
-| `npm start` | Run compiled server |
-
+| `npm start` | Run compiled Node server |
 
 ## Docs site
 
 Static companion landing (GitHub Pages, no upload API):
 
 **https://vovanduc.github.io/stage-drop/**
-
-> The live upload/claim server does **not** run on Pages. Use `npm run dev` locally (or later Workers). The URL above is live after Pages is enabled for `/docs` on `master`.
 
 Skin: **Custom polish** (hand-rolled `docs/index.html` + `styles.css`; reviewed 2026-09-23, keep current).
 
