@@ -97,7 +97,7 @@
       }
       drop.querySelector('strong').textContent = 'Uploading…';
       try {
-        const res = await fetch('/api/upload', {
+        const res = await fetch(new URL('api/upload', window.location.href), {
           method: 'POST',
           headers: { 'content-type': 'application/zip' },
           body: file,
