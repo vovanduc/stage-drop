@@ -1,4 +1,4 @@
-import AdmZip from 'adm-zip';
+import { unzipSync, zipSync, strToU8 } from 'fflate';
 import { isAllowedExtension } from './content-types.js';
 import type { ExtractedFile } from './types.js';
 
@@ -32,8 +32,12 @@ function normalizeEntryPath(entryName: string): string | null {
   return parts.join('/');
 }
 
+/**
+ * Extract + validate a zip. Accepts Uint8Array (Workers) or Buffer (Node).
+ * Uses fflate so the same path works on Cloudflare Workers and Node.
+ */
 export function extractZip(
-  buffer: Buffer,
+  buffer: Uint8Array,
   opts: { maxZipBytes: number; maxFiles: number },
 ): ExtractedFile[] {
   if (buffer.byteLength > opts.maxZipBytes) {
@@ -43,18 +47,18 @@ export function extractZip(
     );
   }
 
-  let zip: AdmZip;
+  let unzipped: Record<string, Uint8Array>;
   try {
-    zip = new AdmZip(buffer);
+    unzipped = unzipSync(buffer);
   } catch {
     throw new ZipValidationError('Invalid zip archive', 'INVALID_ZIP');
   }
 
-  const entries = zip.getEntries().filter((e) => !e.isDirectory);
-  if (entries.length === 0) {
+  const entryNames = Object.keys(unzipped).filter((name) => !name.endsWith('/'));
+  if (entryNames.length === 0) {
     throw new ZipValidationError('Zip contains no files', 'EMPTY');
   }
-  if (entries.length > opts.maxFiles) {
+  if (entryNames.length > opts.maxFiles) {
     throw new ZipValidationError(
       `Zip exceeds max file count of ${opts.maxFiles}`,
       'TOO_MANY_FILES',
@@ -62,13 +66,10 @@ export function extractZip(
   }
 
   const files: ExtractedFile[] = [];
-  for (const entry of entries) {
-    const safePath = normalizeEntryPath(entry.entryName);
+  for (const entryName of entryNames) {
+    const safePath = normalizeEntryPath(entryName);
     if (!safePath) {
-      throw new ZipValidationError(
-        `Blocked unsafe path: ${entry.entryName}`,
-        'ZIP_SLIP',
-      );
+      throw new ZipValidationError(`Blocked unsafe path: ${entryName}`, 'ZIP_SLIP');
     }
     if (!isAllowedExtension(safePath)) {
       throw new ZipValidationError(
@@ -76,17 +77,18 @@ export function extractZip(
         'DISALLOWED_TYPE',
       );
     }
-    files.push({ path: safePath, data: new Uint8Array(entry.getData()) });
+    files.push({ path: safePath, data: unzipped[entryName]! });
   }
   return files;
 }
 
 /** Build a zip in-memory for tests / folder uploads converted to zip. */
-export function buildZip(files: { path: string; data: Buffer | string }[]): Buffer {
-  const zip = new AdmZip();
+export function buildZip(
+  files: { path: string; data: Uint8Array | string }[],
+): Uint8Array {
+  const obj: Record<string, Uint8Array> = {};
   for (const f of files) {
-    const data = typeof f.data === 'string' ? Buffer.from(f.data, 'utf8') : f.data;
-    zip.addFile(f.path, data);
+    obj[f.path] = typeof f.data === 'string' ? strToU8(f.data) : f.data;
   }
-  return zip.toBuffer();
+  return zipSync(obj);
 }
