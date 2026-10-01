@@ -11,9 +11,9 @@ Inspired by [Cloudflare Drop](https://www.cloudflare.com/drop/) ([llms.txt](http
 | **App** | https://lab.vovanduc.tech/stage-drop/ |
 | **Health** | https://lab.vovanduc.tech/stage-drop/health |
 | **Worker** | name `lab` (Custom Domain `lab.vovanduc.tech`) |
-| **Docs site** | https://vovanduc.github.io/stage-drop/ (GitHub Pages from `docs/` — **no upload API**) |
+| **Docs site** | https://vovanduc.github.io/stage-drop/ → redirects to this repo (GitHub Pages `/docs`) |
 
-Pages vs lab: **Pages** = bilingual marketing/docs skin under `docs/`. **Lab Worker** = real upload/claim/serve under `/stage-drop`. Do not restyle `docs/` when changing the Worker.
+Pages vs lab: **Pages** = minimal redirect from `docs/` to this GitHub repo. **Lab Worker** = real upload/claim/serve under `/stage-drop`. Architecture diagrams live in this README (mermaid).
 
 Ops checklist (R2/KV/secrets/deploy): see **[LAB.md](./LAB.md)**.
 
@@ -90,7 +90,7 @@ stateDiagram-v2
 - **Zip**: [fflate](https://github.com/101arrowz/fflate) (Uint8Array) — same path on Node and Workers.
 - **Local**: `FsBlobStore` + `MemoryMetaStore` via `src/server.ts`.
 - **Workers (lab)**: `R2BlobStore` + `KvMetaStore` via `src/worker.ts`, base path `/stage-drop`.
-- **Pages**: static intro only (`docs/` → GitHub Pages). **Lab**: real API at https://lab.vovanduc.tech/stage-drop/.
+- **Pages**: `docs/` → GitHub Pages redirect to this repo. **Lab**: real API at https://lab.vovanduc.tech/stage-drop/.
 
 ## Security (lab / local demo)
 
@@ -115,11 +115,11 @@ Not a production CDN: no malware scan, phishing heuristics, or CAPTCHA.
 
 ## Docs site
 
-Static companion landing (GitHub Pages, no upload API):
+GitHub Pages (`master` / `docs/`) redirects to this repository:
 
-**https://vovanduc.github.io/stage-drop/**
+**https://vovanduc.github.io/stage-drop/** → **https://github.com/vovanduc/stage-drop**
 
-Skin: **Custom polish** (hand-rolled `docs/index.html` + `styles.css`; reviewed 2026-09-23, keep current).
+Keeps `docs/.nojekyll`. Intro landing retired; architecture mermaid above is canonical for readers.
 
 ## Agent setup
 
