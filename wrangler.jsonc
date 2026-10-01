@@ -5,10 +5,13 @@
   "compatibility_date": "2026-09-23",
   // Assets: public/ UI. Worker runs first (API/claim/sites); static served via ASSETS binding
   // under /stage-drop/ by rewriting paths in src/worker.ts (ASSETS root is public/).
+  // html_handling "none": worker already maps `/` → `/index.html`; avoids ASSETS 308
+  // `/index.html` → Location `/` which would escape the /stage-drop/ mount in the browser.
+  // Safe with run_worker_first: true (Worker owns all routing). See Cloudflare HTML handling docs.
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",
-    "html_handling": "auto-trailing-slash",
+    "html_handling": "none",
     "run_worker_first": true
   },
   "r2_buckets": [

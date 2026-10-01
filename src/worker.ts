@@ -15,6 +15,9 @@ export interface Env {
 
 const PUBLIC_BASE_URL = 'https://lab.vovanduc.tech/stage-drop';
 const STAGE_PREFIX = '/stage-drop';
+const ASSETS_ORIGIN = 'https://assets.local';
+/** Cap internal ASSETS redirect hops (html_handling can 3xx a few times). */
+const MAX_ASSET_REDIRECTS = 3;
 
 function createStageApp(env: Env) {
   return createApp({
@@ -30,9 +33,93 @@ function createStageApp(env: Env) {
   });
 }
 
+/**
+ * Rewrite an ASSETS Location so the browser stays under /stage-drop/.
+ * ASSETS returns paths relative to the asset root (e.g. `/`), which the
+ * browser would otherwise resolve against the origin root and leave the mount.
+ */
+export function prefixAssetLocation(location: string, mountPrefix = STAGE_PREFIX): string {
+  // Absolute URL → keep origin, rewrite path under mount if needed.
+  try {
+    if (/^https?:\/\//i.test(location)) {
+      const u = new URL(location);
+      if (!u.pathname.startsWith(mountPrefix)) {
+        u.pathname = `${mountPrefix}${u.pathname === '/' ? '/' : u.pathname}`;
+      }
+      return u.toString();
+    }
+  } catch {
+    /* fall through to path handling */
+  }
+  const path = location.startsWith('/') ? location : `/${location}`;
+  if (path.startsWith(mountPrefix)) return path;
+  return `${mountPrefix}${path === '/' ? '/' : path}`;
+}
+
+type AssetFetcher = { fetch: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response> };
+
+/**
+ * Fetch from ASSETS and follow redirects on the binding (not in the browser).
+ *
+ * Why: with html_handling auto-trailing-slash, ASSETS often responds to
+ * `/index.html` with 308 Location: `/`. Returning that to the client makes
+ * the browser leave `/stage-drop/` and hit the lab hub at `/`.
+ *
+ * We follow up to maxHops on the ASSETS fetcher and return the final 200 body.
+ * If a redirect remains (exhausted hops / unfollowable), Location is rewritten
+ * under mountPrefix as a safety net.
+ */
+export async function fetchAssetFollowingRedirects(
+  assets: AssetFetcher,
+  assetPath: string,
+  raw: Request,
+  opts: { maxHops?: number; mountPrefix?: string; assetsOrigin?: string } = {},
+): Promise<Response> {
+  const maxHops = opts.maxHops ?? MAX_ASSET_REDIRECTS;
+  const mountPrefix = opts.mountPrefix ?? STAGE_PREFIX;
+  const assetsOrigin = opts.assetsOrigin ?? ASSETS_ORIGIN;
+
+  let current = new URL(assetPath, assetsOrigin);
+
+  for (let hop = 0; hop <= maxHops; hop++) {
+    const res = await assets.fetch(new Request(current.toString(), raw));
+
+    // Success / error — hand through (including 404 so caller can fall back).
+    if (res.status < 300 || res.status >= 400) {
+      return res;
+    }
+
+    const location = res.headers.get('Location');
+    if (!location) return res;
+
+    const next = new URL(location, current);
+
+    // Same-host ASSETS redirect: follow internally while hops remain.
+    if (next.origin === current.origin && hop < maxHops) {
+      current = next;
+      // 301/302/303 → subsequent fetch as GET; 307/308 keep method (Request copy).
+      if (res.status === 301 || res.status === 302 || res.status === 303) {
+        raw = new Request(current.toString(), { method: 'GET', headers: raw.headers });
+      }
+      continue;
+    }
+
+    // Exhausted hops or cross-origin: never leak a bare `/` Location to the browser.
+    const headers = new Headers(res.headers);
+    headers.set('Location', prefixAssetLocation(location, mountPrefix));
+    return new Response(null, {
+      status: res.status,
+      statusText: res.statusText,
+      headers,
+    });
+  }
+
+  // Unreachable, but satisfy the type checker.
+  return assets.fetch(new Request(current.toString(), raw));
+}
+
 async function serveAsset(env: Env, assetPath: string, raw: Request): Promise<Response> {
-  const url = new URL(assetPath, 'https://assets.local');
-  return env.ASSETS.fetch(new Request(url.toString(), raw));
+  return fetchAssetFollowingRedirects(env.ASSETS, assetPath, raw);
 }
 
 function isStaticAssetPath(pathname: string): boolean {
