@@ -64,20 +64,33 @@ Requires Wrangler auth and a filled `kv_namespaces[0].id`. CI: set GitHub secret
 ## Architecture
 
 ```mermaid
-flowchart LR
-  UI["Web UI / curl"] --> Core["Core Hono\nupload · claim · serve · expire"]
-  Core --> Blob["BlobStore interface"]
-  Core --> Meta["MetaStore interface"]
-  Blob --> FS["Local FS blobs"]
-  Meta --> Mem["In-memory meta"]
-  Blob --> R2["R2BlobStore"]
-  Meta --> KV["KvMetaStore"]
+flowchart TD
+  U["Upload zip"] --> V["Unzip + validate"]
+  V --> R2["R2 sites/{id}/"]
+  V --> KV["KV meta:{id} · claim:{sha256} · exp:{expiresAt}:{id}"]
+  KV --> URL["liveUrl + claimUrl"]
+  S["GET /s/:id"] --> M["Lookup meta"]
+  M -->|ok| SR["Serve from R2"]
+  M -->|unclaimed expired| G["410 Gone"]
+  C["Claim token"] --> H["SHA-256 → claim:{hash}"]
+  H --> CL["claimed=true · expiresAt=null · delete exp: · rotate hash"]
+  CR["Cron */5"] --> SW["sweepExpired → delete R2 + KV"]
+```
+
+```mermaid
+stateDiagram-v2
+  [*] --> LiveUnclaimed: upload
+  LiveUnclaimed --> Claimed: claim one-shot
+  LiveUnclaimed --> Expired: TTL 60 min
+  Expired --> [*]: cron sweep
+  Claimed --> [*]
 ```
 
 - **Core**: TypeScript + [Hono](https://hono.dev) — portable HTTP surface (`createApp`).
 - **Zip**: [fflate](https://github.com/101arrowz/fflate) (Uint8Array) — same path on Node and Workers.
 - **Local**: `FsBlobStore` + `MemoryMetaStore` via `src/server.ts`.
-- **Workers**: `R2BlobStore` + `KvMetaStore` via `src/worker.ts`, base path `/stage-drop`.
+- **Workers (lab)**: `R2BlobStore` + `KvMetaStore` via `src/worker.ts`, base path `/stage-drop`.
+- **Pages**: static intro only (`docs/` → GitHub Pages). **Lab**: real API at https://lab.vovanduc.tech/stage-drop/.
 
 ## Security (lab / local demo)
 
