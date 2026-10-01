@@ -20,9 +20,8 @@
   "kv_namespaces": [
     {
       "binding": "META",
-      // Replace after: npx wrangler kv namespace create META
-      // (or Dashboard → Workers → KV → Create). Paste the namespace id here.
-      "id": "REPLACE_WITH_KV_NAMESPACE_ID"
+      // stage-drop-kv-namespace (account dashboard)
+      "id": "057096fc08454841a23fbef8243a9344"
     }
   ],
   "triggers": {
